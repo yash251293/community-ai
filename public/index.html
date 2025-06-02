@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Local Assist - PWA</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
 </head>
 <body>
     <div class="container">
@@ -22,6 +24,19 @@
         <p>Your one-stop platform for local help and services.</p>
         <p>Find what you need or offer your skills to the community!</p>
     </div>
-    <script src="script.js"></script>
+    <script src="script.js"></script> <!-- Assuming this is for global non-PWA logic, if any -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful with scope: ', registration.scope);
+            })
+            .catch(error => {
+              console.log('ServiceWorker registration failed: ', error);
+            });
+        });
+      }
+    </script>
 </body>
 </html>

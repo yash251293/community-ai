@@ -1,10 +1,13 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
-const path = require('path');
+const path = require('path'); // path module already imported, ensure it's used as intended.
 
 const app = express();
 app.use(express.json());
+
+// Serve static files from the 'public' directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 const USERS_FILE = path.join(__dirname, 'src', 'services', 'users.json');
 
