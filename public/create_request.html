@@ -5,59 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Service Request - The Local Assist</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
 </head>
 <body>
+    <nav class="main-nav">
+        <div class="nav-container container">
+            <a href="index.html" class="nav-brand">The Local Assist</a>
+            <ul class="nav-links">
+                <li class="nav-item" id="nav-home"><a href="index.html">Home</a></li>
+                <li class="nav-item" id="nav-requests"><a href="requests.html">View Requests</a></li>
+                <li class="nav-item" id="nav-offers"><a href="offers.html">View Offers</a></li>
+                
+                <li class="nav-item" id="nav-login" style="display:none;"><a href="login.html">Login</a></li>
+                <li class="nav-item" id="nav-signup" style="display:none;"><a href="signup.html">Sign Up</a></li>
+    
+                <li class="nav-item" id="nav-profile" style="display:none;"><a href="profile.html">My Profile</a></li>
+                <li class="nav-item" id="nav-create-request" style="display:none;"><a href="create_request.html" class="active">Post Request</a></li>
+                <li class="nav-item" id="nav-create-offer" style="display:none;"><a href="create_offer.html">Offer Service</a></li>
+                <li class="nav-item" id="nav-conversations" style="display:none;"><a href="conversations.html">My Chats</a></li>
+                <li class="nav-item" id="nav-logout" style="display:none;"><a href="#" id="logout-link" class="btn btn-secondary">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
     <div class="container">
         <h1>Post a New Service Request</h1>
+        <div id="form-feedback-message" class="message-feedback" style="display: none;"></div>
         <form id="createRequestForm">
-            <div>
+            <div class="form-group">
                 <label for="title">Title:</label>
                 <input type="text" id="title" name="title" required>
             </div>
-            <div>
+            <div class="form-group">
                 <label for="description">Description:</label>
                 <textarea id="description" name="description" rows="4" required></textarea>
             </div>
-            <div>
+            <div class="form-group">
                 <label for="category">Category:</label>
                 <input type="text" id="category" name="category" required>
                 <small>E.g., Plumbing, Gardening, Tutoring</small>
             </div>
-            <div>
+            <div class="form-group">
                 <label for="location">Location:</label>
                 <input type="text" id="location" name="location" required>
                 <small>E.g., Your address or neighborhood</small>
             </div>
-            <button type="submit">Post Request</button>
+            <button type="submit" class="btn btn-primary btn-block">Post Request</button>
         </form>
-        <p id="message"></p>
-        <p><a href="profile.html">Back to Profile</a> | <a href="index.html">Home</a></p>
+        <!-- Removed old navigation paragraph -->
     </div>
 
+    <script src="nav.js"></script>
     <script>
         const createRequestForm = document.getElementById('createRequestForm');
-        const messageElement = document.getElementById('message');
+        const feedbackContainer = document.getElementById('form-feedback-message');
+        const submitButton = createRequestForm.querySelector('button[type="submit"]');
 
-        // Check for login status
         const userId = localStorage.getItem('userId');
-        const token = localStorage.getItem('mockToken');
+        const token = localStorage.getItem('mockToken'); 
 
         if (!userId || !token) {
-            messageElement.textContent = 'You must be logged in to post a request. Redirecting to login...';
-            messageElement.style.color = 'red';
+            feedbackContainer.textContent = 'You must be logged in to post a request. Redirecting to login...';
+            feedbackContainer.className = 'message-feedback error';
+            feedbackContainer.style.display = 'block';
             setTimeout(() => {
                 window.location.href = 'login.html';
             }, 2500);
+            if (submitButton) submitButton.disabled = true; // Disable button if redirecting
+            createRequestForm.style.display = 'none'; 
         }
 
         createRequestForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            if (!userId) { // Double check, in case timeout didn't redirect yet
-                messageElement.textContent = 'Login session expired. Please login again.';
+            feedbackContainer.textContent = '';
+            feedbackContainer.style.display = 'none';
+            feedbackContainer.className = 'message-feedback';
+
+            const originalButtonText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Posting...';
+
+            if (!userId) { 
+                feedbackContainer.textContent = 'Login session expired. Please login again.';
+                feedbackContainer.className = 'message-feedback error';
+                feedbackContainer.style.display = 'block';
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
                 return;
             }
-            messageElement.textContent = '';
-
+            
             const title = event.target.title.value;
             const description = event.target.description.value;
             const category = event.target.category.value;
@@ -68,26 +105,33 @@
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        // In a real app, the token would be sent for authentication
                         // 'Authorization': `Bearer ${token}` 
                     },
                     body: JSON.stringify({ userId, title, description, category, location }),
                 });
 
-                const result = await response.json();
+                const resultText = await response.text();
+                let result = { message: `Response error. Status: ${response.status} - ${resultText}`};
+                try { result = JSON.parse(resultText); } catch (e) {}
+
+                feedbackContainer.style.display = 'block';
 
                 if (response.ok) {
-                    messageElement.textContent = 'Service request posted successfully!';
-                    messageElement.style.color = 'green';
+                    feedbackContainer.textContent = 'Service request posted successfully!';
+                    feedbackContainer.className = 'message-feedback success';
                     createRequestForm.reset();
                 } else {
-                    messageElement.textContent = `Error: ${result.message}`;
-                    messageElement.style.color = 'red';
+                    feedbackContainer.textContent = `Error: ${result.message}`;
+                    feedbackContainer.className = 'message-feedback error';
                 }
             } catch (error) {
                 console.error('Create request error:', error);
-                messageElement.textContent = 'An unexpected error occurred. Please try again.';
-                messageElement.style.color = 'red';
+                feedbackContainer.style.display = 'block';
+                feedbackContainer.textContent = 'An unexpected error occurred. Please try again later.';
+                feedbackContainer.className = 'message-feedback error';
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
             }
         });
     </script>

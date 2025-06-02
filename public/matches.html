@@ -5,8 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Matches - The Local Assist</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
 </head>
 <body>
+    <nav class="main-nav">
+        <div class="nav-container container">
+            <a href="index.html" class="nav-brand">The Local Assist</a>
+            <ul class="nav-links">
+                <li class="nav-item" id="nav-home"><a href="index.html">Home</a></li>
+                <li class="nav-item" id="nav-requests"><a href="requests.html">View Requests</a></li>
+                <li class="nav-item" id="nav-offers"><a href="offers.html">View Offers</a></li>
+                
+                <li class="nav-item" id="nav-login" style="display:none;"><a href="login.html">Login</a></li>
+                <li class="nav-item" id="nav-signup" style="display:none;"><a href="signup.html">Sign Up</a></li>
+    
+                <li class="nav-item" id="nav-profile" style="display:none;"><a href="profile.html">My Profile</a></li>
+                <li class="nav-item" id="nav-create-request" style="display:none;"><a href="create_request.html">Post Request</a></li>
+                <li class="nav-item" id="nav-create-offer" style="display:none;"><a href="create_offer.html">Offer Service</a></li>
+                <li class="nav-item" id="nav-conversations" style="display:none;"><a href="conversations.html">My Chats</a></li>
+                <li class="nav-item" id="nav-logout" style="display:none;"><a href="#" id="logout-link" class="btn btn-secondary">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
     <div class="container">
         <h1>Matches</h1>
         <div id="originalItem" class="item-detail">
@@ -15,38 +37,31 @@
         </div>
         <hr>
         <h2>Found Matches</h2>
+        <div id="form-feedback-message" class="message-feedback" style="display: none;"></div> <!-- For loading errors or no matches -->
         <div id="matchesList" class="item-list">
             <!-- Matches will be loaded here -->
         </div>
-        <p id="message"></p>
-        <p><a href="index.html">Home</a> | <a href="requests.html">View Requests</a> | <a href="offers.html">View Offers</a></p>
+        <!-- Old <p> for messages and navigation removed -->
     </div>
 
+    <script src="nav.js"></script>
     <script>
         const originalItemDiv = document.getElementById('originalItem');
         const matchesListDiv = document.getElementById('matchesList');
-        const messageElement = document.getElementById('message');
+        const feedbackContainer = document.getElementById('form-feedback-message'); // Changed from messageElement
 
         function escapeHTML(str) {
             if (typeof str !== 'string') return '';
             return str.replace(/[&<>"']/g, function (match) {
                 return {
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    '"': '&quot;',
-                    "'": '&#39;'
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
                 }[match];
             });
         }
 
         async function fetchItemDetails(itemType, itemId) {
-            // Determine the correct endpoint based on itemType
             const endpoint = itemType === 'request' ? `/api/requests` : `/api/offers`;
-            // This is a simplified fetch. Ideally, you'd fetch a single item by ID.
-            // For now, we fetch all and filter, which is inefficient but works with current backend.
-            // TODO: Backend should have GET /api/requests/:id and GET /api/offers/:id
-            
+            // TODO: Backend should have GET /api/requests/:id and GET /api/offers/:id for efficiency
             try {
                 const response = await fetch(endpoint);
                 if (!response.ok) throw new Error(`Failed to fetch original ${itemType}`);
@@ -54,6 +69,7 @@
                 const item = items.find(i => (itemType === 'request' ? i.RequestID : i.OfferID) === parseInt(itemId));
 
                 if (item) {
+                    // Using .btn .btn-info .btn-sm for map link
                     originalItemDiv.innerHTML = `
                         <h3>${escapeHTML(item.Title)}</h3>
                         <p><strong>Category:</strong> ${escapeHTML(item.Category)}</p>
@@ -62,51 +78,55 @@
                         ${itemType === 'offer' ? `<p><strong>Service Area:</strong> ${escapeHTML(item.ServiceArea)}</p>` : ''}
                         ${itemType === 'offer' ? `<p><strong>Availability:</strong> ${escapeHTML(item.Availability)}</p>` : ''}
                         <p><strong>Status:</strong> ${escapeHTML(item.Status)}</p>
-                        ${(itemType === 'request' && item.Location) ? `<p><a href="map.html?location=${encodeURIComponent(item.Location)}" class="button-link view-map-link" target="_blank">View on Map</a></p>` : ''}
-                        ${(itemType === 'offer' && item.ServiceArea) ? `<p><a href="map.html?location=${encodeURIComponent(item.ServiceArea)}" class="button-link view-map-link" target="_blank">View on Map</a></p>` : ''}
+                        ${(itemType === 'request' && item.Location) ? `<p><a href="map.html?location=${encodeURIComponent(item.Location)}" class="btn btn-info btn-sm view-map-link" target="_blank">View on Map</a></p>` : ''}
+                        ${(itemType === 'offer' && item.ServiceArea) ? `<p><a href="map.html?location=${encodeURIComponent(item.ServiceArea)}" class="btn btn-info btn-sm view-map-link" target="_blank">View on Map</a></p>` : ''}
                     `;
                 } else {
-                    originalItemDiv.innerHTML = `<p>Original ${itemType} not found.</p>`;
+                    originalItemDiv.innerHTML = `<p class="message-feedback error" style="display:block;">Original ${itemType} (ID: ${itemId}) not found.</p>`;
                 }
             } catch (error) {
                 console.error(`Error fetching original ${itemType}:`, error);
-                originalItemDiv.innerHTML = `<p>Error loading original ${itemType} details.</p>`;
+                originalItemDiv.innerHTML = `<p class="message-feedback error" style="display:block;">Error loading original ${itemType} details.</p>`;
             }
         }
-
 
         async function fetchMatches() {
             const params = new URLSearchParams(window.location.search);
             const itemType = params.get('type');
             const itemId = params.get('id');
 
+            feedbackContainer.style.display = 'none'; // Clear previous messages
+
             if (!itemType || !itemId) {
-                messageElement.textContent = 'Item type or ID missing from URL parameters.';
-                messageElement.style.color = 'red';
+                feedbackContainer.textContent = 'Item type or ID missing from URL parameters.';
+                feedbackContainer.className = 'message-feedback error';
+                feedbackContainer.style.display = 'block';
                 return;
             }
 
-            // Fetch and display the original item's details
             await fetchItemDetails(itemType, itemId);
 
             try {
                 const response = await fetch(`/api/matches?itemType=${itemType}&itemId=${itemId}`);
                 if (!response.ok) {
-                     const errorResult = await response.json();
-                    throw new Error(errorResult.message || `HTTP error! status: ${response.status}`);
+                     const errorResult = await response.json(); // Assuming error from API is user-friendly
+                    throw new Error(errorResult.message || `Could not retrieve matches at this time.`);
                 }
                 const matches = await response.json();
 
                 if (matches.length === 0) {
-                    messageElement.textContent = 'No matches found for this item.';
+                    feedbackContainer.textContent = 'No matches found for this item.';
+                    feedbackContainer.className = 'message-feedback info'; 
+                    feedbackContainer.style.display = 'block';
+                    matchesListDiv.innerHTML = ''; 
                     return;
                 }
 
-                matchesListDiv.innerHTML = ''; // Clear previous matches
+                matchesListDiv.innerHTML = ''; 
                 matches.forEach(match => {
                     const item = document.createElement('div');
-                    item.className = 'list-item match-item'; // Added match-item for specific styling if needed
-                    // Display details based on whether the match is an offer or a request
+                    item.className = 'list-item match-item'; 
+                    // Using .btn .btn-secondary .btn-sm for message button
                     if (itemType === 'request') { // Matches are offers
                         item.innerHTML = `
                             <h4>${escapeHTML(match.Title)} (Offer)</h4>
@@ -115,7 +135,7 @@
                             <p><strong>Availability:</strong> ${escapeHTML(match.Availability)}</p>
                             <p><small>Offered by UserID: ${match.UserID}</small></p>
                             <p><small>Posted: ${new Date(match.CreatedAt).toLocaleDateString()}</small></p>
-                            <button onclick="messageUser(${match.UserID})">Message User</button>
+                            <button onclick="messageUser(${match.UserID})" class="btn btn-secondary btn-sm">Message User</button>
                         `;
                     } else { // Matches are requests (itemType === 'offer')
                         item.innerHTML = `
@@ -124,7 +144,7 @@
                             <p><strong>Location:</strong> ${escapeHTML(match.Location)}</p>
                             <p><small>Requested by UserID: ${match.UserID}</small></p>
                             <p><small>Posted: ${new Date(match.CreatedAt).toLocaleDateString()}</small></p>
-                            <button onclick="messageUser(${match.UserID})">Message User</button>
+                            <button onclick="messageUser(${match.UserID})" class="btn btn-secondary btn-sm">Message User</button>
                         `;
                     }
                     matchesListDiv.appendChild(item);
@@ -132,20 +152,27 @@
 
             } catch (error) {
                 console.error('Fetch matches error:', error);
-                messageElement.textContent = 'Failed to load matches. ' + error.message;
-                messageElement.style.color = 'red';
+                feedbackContainer.textContent = error.message; // error.message should be user-friendly from the throw
+                feedbackContainer.className = 'message-feedback error';
+                feedbackContainer.style.display = 'block';
             }
         }
 
         function messageUser(otherUserId) {
+            feedbackContainer.style.display = 'none'; // Clear previous messages first
+            feedbackContainer.className = 'message-feedback';
+
             const currentUserId = localStorage.getItem('userId');
             if (!currentUserId) {
-                alert('You must be logged in to send messages. Redirecting to login...');
-                window.location.href = 'login.html';
+                feedbackContainer.textContent = 'You must be logged in to send messages. Please login first.';
+                feedbackContainer.className = 'message-feedback error';
+                feedbackContainer.style.display = 'block';
                 return;
             }
             if (parseInt(currentUserId) === parseInt(otherUserId)) {
-                alert("You cannot message yourself.");
+                feedbackContainer.textContent = "You cannot message yourself.";
+                feedbackContainer.className = 'message-feedback info'; // Using info for this type of notice
+                feedbackContainer.style.display = 'block';
                 return;
             }
             window.location.href = `chat.html?currentUser=${currentUserId}&otherUser=${otherUserId}`;

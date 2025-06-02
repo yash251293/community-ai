@@ -5,29 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>User Profile - The Local Assist</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
 </head>
 <body>
+    <nav class="main-nav">
+        <div class="nav-container container">
+            <a href="index.html" class="nav-brand">The Local Assist</a>
+            <ul class="nav-links">
+                <li class="nav-item" id="nav-home"><a href="index.html">Home</a></li>
+                <li class="nav-item" id="nav-requests"><a href="requests.html">View Requests</a></li>
+                <li class="nav-item" id="nav-offers"><a href="offers.html">View Offers</a></li>
+                
+                <li class="nav-item" id="nav-login" style="display:none;"><a href="login.html">Login</a></li>
+                <li class="nav-item" id="nav-signup" style="display:none;"><a href="signup.html">Sign Up</a></li>
+    
+                <li class="nav-item" id="nav-profile" style="display:none;"><a href="profile.html" class="active">My Profile</a></li>
+                <li class="nav-item" id="nav-create-request" style="display:none;"><a href="create_request.html">Post Request</a></li>
+                <li class="nav-item" id="nav-create-offer" style="display:none;"><a href="create_offer.html">Offer Service</a></li>
+                <li class="nav-item" id="nav-conversations" style="display:none;"><a href="conversations.html">My Chats</a></li>
+                <li class="nav-item" id="nav-logout" style="display:none;"><a href="#" id="logout-link" class="btn btn-secondary">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
     <div class="container">
         <h1>User Profile</h1>
+        <div id="form-feedback-message" class="message-feedback" style="display: none;"></div> <!-- For general messages -->
         <div id="profileDetails">
-            <p><strong>Name:</strong> <span id="profileName"></span></p>
-            <p><strong>Email:</strong> <span id="profileEmail"></span></p>
-            <p><strong>Location:</strong> <span id="profileLocation"></span></p>
-            <p><strong>Bio:</strong> <span id="profileBio"></span></p>
-            <p><strong>Joined:</strong> <span id="profileCreatedAt"></span></p>
-            <p><strong>Last Login:</strong> <span id="profileLastLogin"></span></p>
+            <p><strong>Name:</strong> <span id="profileName">N/A</span></p>
+            <p><strong>Email:</strong> <span id="profileEmail">N/A</span></p>
+            <p><strong>Location:</strong> <span id="profileLocation">Not set</span></p>
+            <p><strong>Bio:</strong> <span id="profileBio">Not set</span></p>
+            <p><strong>Joined:</strong> <span id="profileCreatedAt">N/A</span></p>
+            <p><strong>Last Login:</strong> <span id="profileLastLogin">N/A</span></p>
         </div>
-        <p id="message"></p>
         
         <div class="profile-actions">
-            <a href="create_request.html" class="button-link">Post a Service Request</a>
-            <a href="create_offer.html" class="button-link">Offer a Service</a>
+            <a href="create_request.html" class="btn btn-info">Post a Service Request</a> <!-- Changed to .btn -->
+            <a href="create_offer.html" class="btn btn-info">Offer a Service</a> <!-- Changed to .btn -->
         </div>
 
-        <button id="logoutButton">Logout</button>
-        <p><a href="index.html">Back to Home</a></p>
+        <!-- Logout button is now in the nav bar, this can be removed if nav.js handles it well -->
+        <!-- <button id="logoutButton" class="btn btn-danger">Logout</button> --> 
+        <!-- The old <p><a href="index.html">Back to Home</a></p> is redundant due to nav bar -->
     </div>
 
+    <script src="nav.js"></script>
     <script>
         const profileName = document.getElementById('profileName');
         const profileEmail = document.getElementById('profileEmail');
@@ -35,16 +59,17 @@
         const profileBio = document.getElementById('profileBio');
         const profileCreatedAt = document.getElementById('profileCreatedAt');
         const profileLastLogin = document.getElementById('profileLastLogin');
-        const messageElement = document.getElementById('message');
-        const logoutButton = document.getElementById('logoutButton');
+        const feedbackContainer = document.getElementById('form-feedback-message'); // Using the new feedback container
+        // const logoutButton = document.getElementById('logoutButton'); // Old button, now in nav
 
         async function fetchProfile() {
             const userId = localStorage.getItem('userId');
-            const token = localStorage.getItem('mockToken');
+            const token = localStorage.getItem('mockToken'); // Token might be used for auth header in future
 
             if (!userId || !token) {
-                messageElement.textContent = 'You are not logged in. Redirecting to login...';
-                messageElement.style.color = 'red';
+                feedbackContainer.textContent = 'You are not logged in. Redirecting to login...';
+                feedbackContainer.className = 'message-feedback error';
+                feedbackContainer.style.display = 'block';
                 setTimeout(() => {
                     window.location.href = 'login.html';
                 }, 2000);
@@ -52,8 +77,9 @@
             }
 
             try {
-                const response = await fetch(`/api/users/${userId}/profile`);
+                const response = await fetch(`/api/users/${userId}/profile`); // Auth might be needed here in future
                 const result = await response.json();
+                feedbackContainer.style.display = 'none'; // Clear previous messages
 
                 if (response.ok) {
                     profileName.textContent = result.Name || 'N/A';
@@ -61,10 +87,11 @@
                     profileLocation.textContent = result.Location || 'Not set';
                     profileBio.textContent = result.Bio || 'Not set';
                     profileCreatedAt.textContent = result.CreatedAt ? new Date(result.CreatedAt).toLocaleDateString() : 'N/A';
-                    profileLastLogin.textContent = result.LastLogin ? new Date(result.LastLogin).toLocaleString() : 'Never';
+                    profileLastLogin.textContent = result.LastLogin ? new Date(result.LastLogin).toLocaleString() : 'N/A';
                 } else {
-                    messageElement.textContent = `Error: ${result.message}. Redirecting to login...`;
-                    messageElement.style.color = 'red';
+                    feedbackContainer.textContent = `Error: ${result.message}. Redirecting to login...`;
+                    feedbackContainer.className = 'message-feedback error';
+                    feedbackContainer.style.display = 'block';
                     localStorage.removeItem('userId');
                     localStorage.removeItem('mockToken');
                     setTimeout(() => {
@@ -73,20 +100,28 @@
                 }
             } catch (error) {
                 console.error('Profile fetch error:', error);
-                messageElement.textContent = 'An unexpected error occurred. Please try again.';
-                messageElement.style.color = 'red';
+                feedbackContainer.textContent = 'An unexpected error occurred while fetching your profile.';
+                feedbackContainer.className = 'message-feedback error';
+                feedbackContainer.style.display = 'block';
             }
         }
 
-        logoutButton.addEventListener('click', () => {
-            localStorage.removeItem('userId');
-            localStorage.removeItem('mockToken');
-            messageElement.textContent = 'Logged out successfully. Redirecting to login...';
-            messageElement.style.color = 'green';
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 1500);
-        });
+        // Logout functionality is now handled by nav.js and the link in the main navigation.
+        // If the old logout button was kept, its event listener would be here:
+        /*
+        if (logoutButton) {
+            logoutButton.addEventListener('click', () => {
+                localStorage.removeItem('userId');
+                localStorage.removeItem('mockToken');
+                feedbackContainer.textContent = 'Logged out successfully. Redirecting to login...';
+                feedbackContainer.className = 'message-feedback success';
+                feedbackContainer.style.display = 'block';
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 1500);
+            });
+        }
+        */
 
         // Fetch profile data when the page loads
         fetchProfile();

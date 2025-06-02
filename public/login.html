@@ -5,32 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - The Local Assist</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="/manifest.json"> <!-- Added manifest link -->
+    <meta name="theme-color" content="#007bff"> <!-- Added theme color -->
 </head>
 <body>
+    <nav class="main-nav">
+        <div class="nav-container container">
+            <a href="index.html" class="nav-brand">The Local Assist</a>
+            <ul class="nav-links">
+                <li class="nav-item" id="nav-home"><a href="index.html">Home</a></li>
+                <li class="nav-item" id="nav-requests"><a href="requests.html">View Requests</a></li>
+                <li class="nav-item" id="nav-offers"><a href="offers.html">View Offers</a></li>
+                
+                <li class="nav-item" id="nav-login" style="display:none;"><a href="login.html" class="active">Login</a></li>
+                <li class="nav-item" id="nav-signup" style="display:none;"><a href="signup.html">Sign Up</a></li>
+    
+                <li class="nav-item" id="nav-profile" style="display:none;"><a href="profile.html">My Profile</a></li>
+                <li class="nav-item" id="nav-create-request" style="display:none;"><a href="create_request.html">Post Request</a></li>
+                <li class="nav-item" id="nav-create-offer" style="display:none;"><a href="create_offer.html">Offer Service</a></li>
+                <li class="nav-item" id="nav-conversations" style="display:none;"><a href="conversations.html">My Chats</a></li>
+                <li class="nav-item" id="nav-logout" style="display:none;"><a href="#" id="logout-link" class="btn btn-secondary">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
     <div class="container">
-        <h1>Login</h1>
+        <h1>Login to Your Account</h1>
+        <div id="form-feedback-message" class="message-feedback" style="display: none;"></div>
         <form id="loginForm">
-            <div>
+            <div class="form-group">
                 <label for="email">Email:</label>
                 <input type="email" id="email" name="email" required>
             </div>
-            <div>
+            <div class="form-group">
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit">Login</button>
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
         </form>
-        <p id="message"></p>
-        <p>Don't have an account? <a href="signup.html">Sign up here</a>.</p>
+        <p class="text-center mt-3">Don't have an account? <a href="signup.html">Sign up here</a>.</p>
     </div>
 
+    <script src="nav.js"></script> <!-- Added nav.js script -->
     <script>
         const loginForm = document.getElementById('loginForm');
-        const messageElement = document.getElementById('message');
+        const feedbackContainer = document.getElementById('form-feedback-message');
+        const submitButton = loginForm.querySelector('button[type="submit"]');
 
         loginForm.addEventListener('submit', async (event) => {
             event.preventDefault();
-            messageElement.textContent = ''; // Clear previous messages
+            feedbackContainer.textContent = '';
+            feedbackContainer.style.display = 'none';
+            feedbackContainer.className = 'message-feedback'; 
+
+            const originalButtonText = submitButton.textContent;
+            submitButton.disabled = true;
+            submitButton.textContent = 'Logging In...';
 
             const email = event.target.email.value;
             const password = event.target.password.value;
@@ -45,24 +75,28 @@
                 });
 
                 const result = await response.json();
+                feedbackContainer.style.display = 'block'; // Show feedback container
 
                 if (response.ok) {
-                    messageElement.textContent = 'Login successful!';
-                    messageElement.style.color = 'green';
+                    // feedbackContainer.textContent = 'Login successful! Redirecting...'; // Optional: message before redirect
+                    // feedbackContainer.className = 'message-feedback success';
                     localStorage.setItem('mockToken', result.token);
-                    // Extract UserID from token (assuming format "mock-token-for-USERID")
                     const userId = result.token.split('-').pop();
                     localStorage.setItem('userId', userId); 
                     loginForm.reset();
                     window.location.href = `profile.html`; // Redirect to profile page
                 } else {
-                    messageElement.textContent = `Error: ${result.message}`;
-                    messageElement.style.color = 'red';
+                    feedbackContainer.textContent = `Error: ${result.message}`;
+                    feedbackContainer.className = 'message-feedback error';
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                messageElement.textContent = 'An unexpected error occurred. Please try again.';
-                messageElement.style.color = 'red';
+                feedbackContainer.style.display = 'block'; 
+                feedbackContainer.textContent = 'An unexpected error occurred. Please try again later.';
+                feedbackContainer.className = 'message-feedback error';
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = originalButtonText;
             }
         });
     </script>

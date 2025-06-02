@@ -5,41 +5,68 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat - The Local Assist</title>
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
 </head>
 <body>
+    <nav class="main-nav">
+        <div class="nav-container container">
+            <a href="index.html" class="nav-brand">The Local Assist</a>
+            <ul class="nav-links">
+                <li class="nav-item" id="nav-home"><a href="index.html">Home</a></li>
+                <li class="nav-item" id="nav-requests"><a href="requests.html">View Requests</a></li>
+                <li class="nav-item" id="nav-offers"><a href="offers.html">View Offers</a></li>
+                
+                <li class="nav-item" id="nav-login" style="display:none;"><a href="login.html">Login</a></li>
+                <li class="nav-item" id="nav-signup" style="display:none;"><a href="signup.html">Sign Up</a></li>
+    
+                <li class="nav-item" id="nav-profile" style="display:none;"><a href="profile.html">My Profile</a></li>
+                <li class="nav-item" id="nav-create-request" style="display:none;"><a href="create_request.html">Post Request</a></li>
+                <li class="nav-item" id="nav-create-offer" style="display:none;"><a href="create_offer.html">Offer Service</a></li>
+                <li class="nav-item" id="nav-conversations" style="display:none;"><a href="conversations.html">My Chats</a></li> 
+                <li class="nav-item" id="nav-logout" style="display:none;"><a href="#" id="logout-link" class="btn btn-secondary">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
     <div class="container chat-container">
         <h1 id="chatHeader">Chat</h1>
         <div id="chatWindow">
             <!-- Messages will be loaded here -->
         </div>
+        <div id="form-feedback-message" class="message-feedback" style="display: none; margin-bottom: 10px;"></div> 
         <form id="sendMessageForm">
-            <textarea id="messageInput" placeholder="Type your message..." required></textarea>
-            <button type="submit">Send</button>
+            <textarea id="messageInput" placeholder="Type your message..." required rows="2"></textarea>
+            <button type="submit" class="btn btn-primary">Send</button>
         </form>
-        <p id="messageStatus"></p>
-        <p><a href="matches.html">Back to Matches</a> | <a href="index.html">Home</a></p>
     </div>
 
+    <script src="nav.js"></script>
     <script>
         const chatHeader = document.getElementById('chatHeader');
         const chatWindow = document.getElementById('chatWindow');
         const sendMessageForm = document.getElementById('sendMessageForm');
         const messageInput = document.getElementById('messageInput');
-        const messageStatus = document.getElementById('messageStatus');
+        const feedbackContainer = document.getElementById('form-feedback-message');
+        const sendButton = sendMessageForm.querySelector('button[type="submit"]');
 
         const params = new URLSearchParams(window.location.search);
         const currentUserId = params.get('currentUser');
         const otherUserId = params.get('otherUser');
 
-        // Basic Auth Check
         const loggedInUserId = localStorage.getItem('userId');
         if (!loggedInUserId || loggedInUserId !== currentUserId) {
-            messageStatus.textContent = 'Error: You are not logged in or user ID mismatch. Redirecting to login...';
-            messageStatus.style.color = 'red';
+            feedbackContainer.textContent = 'Error: You are not logged in or user ID mismatch. Redirecting to login...';
+            feedbackContainer.className = 'message-feedback error';
+            feedbackContainer.style.display = 'block';
+            if(sendButton) sendButton.disabled = true;
             setTimeout(() => { window.location.href = 'login.html'; }, 2500);
         } else if (!otherUserId) {
-            messageStatus.textContent = 'Error: No recipient specified for this chat.';
-            messageStatus.style.color = 'red';
+            feedbackContainer.textContent = 'Error: No recipient specified for this chat.';
+            feedbackContainer.className = 'message-feedback error';
+            feedbackContainer.style.display = 'block';
+            if(sendButton) sendButton.disabled = true;
+            sendMessageForm.style.display = 'none'; 
         } else {
             chatHeader.textContent = `Chat with User ${otherUserId}`;
             fetchAndDisplayMessages();
@@ -56,11 +83,16 @@
             try {
                 const response = await fetch(`/api/messages?userId1=${currentUserId}&userId2=${otherUserId}`);
                 if (!response.ok) {
-                    const err = await response.json();
-                    throw new Error(err.message || `HTTP error! status: ${response.status}`);
+                    const errText = await response.text(); 
+                    let err = { message: `Could not load messages. Please check your connection or try again later. (Status: ${response.status})`};
+                    try { 
+                        const parsedErr = JSON.parse(errText);
+                        err.message = parsedErr.message || err.message;
+                    } catch (e) { /* Use default if not JSON */ }
+                    throw new Error(err.message);
                 }
                 const messages = await response.json();
-                chatWindow.innerHTML = ''; // Clear existing messages
+                chatWindow.innerHTML = ''; 
 
                 if (messages.length === 0) {
                     chatWindow.innerHTML = '<p class="no-messages">No messages yet. Start the conversation!</p>';
@@ -75,50 +107,78 @@
                         }
                         messageDiv.innerHTML = `
                             <p class="msg-content">${escapeHTML(msg.MessageContent)}</p>
-                            <span class="msg-timestamp">${new Date(msg.SentAt).toLocaleTimeString()}</span>
+                            <span class="msg-timestamp">${new Date(msg.SentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         `;
                         chatWindow.appendChild(messageDiv);
                     });
                 }
-                chatWindow.scrollTop = chatWindow.scrollHeight; // Scroll to the bottom
+                chatWindow.scrollTop = chatWindow.scrollHeight; 
             } catch (error) {
                 console.error('Fetch messages error:', error);
-                messageStatus.textContent = `Failed to load messages: ${error.message}`;
-                messageStatus.style.color = 'red';
+                feedbackContainer.textContent = error.message; // Display more user-friendly error
+                feedbackContainer.className = 'message-feedback error';
+                feedbackContainer.style.display = 'block';
             }
         }
 
         sendMessageForm.addEventListener('submit', async (event) => {
             event.preventDefault();
             const content = messageInput.value.trim();
-            if (!content || !currentUserId || !otherUserId) {
-                messageStatus.textContent = 'Cannot send empty message or missing user IDs.';
-                messageStatus.style.color = 'red';
+
+            feedbackContainer.textContent = ''; 
+            feedbackContainer.style.display = 'none';
+            feedbackContainer.className = 'message-feedback';
+            
+            const originalButtonText = sendButton.textContent; // Store original text
+            sendButton.disabled = true;
+            sendButton.textContent = 'Sending...';
+
+
+            if (!content) {
+                feedbackContainer.textContent = 'Cannot send an empty message.';
+                feedbackContainer.className = 'message-feedback error';
+                feedbackContainer.style.display = 'block';
+                sendButton.disabled = false; 
+                sendButton.textContent = originalButtonText; // Restore text
+                return;
+            }
+            if (!currentUserId || !otherUserId) {
+                feedbackContainer.textContent = 'User information is missing. Cannot send message.';
+                feedbackContainer.className = 'message-feedback error';
+                feedbackContainer.style.display = 'block';
+                sendButton.disabled = false;
+                sendButton.textContent = originalButtonText; // Restore text
                 return;
             }
 
-            messageStatus.textContent = 'Sending...';
             try {
                 const response = await fetch('/api/messages', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ senderId: currentUserId, receiverId: otherUserId, content }),
                 });
+                
+                const resultText = await response.text();
+                let result = { message: `Message could not be sent. Please try again. (Status: ${response.status})`};
+                try { 
+                    const parsedResult = JSON.parse(resultText);
+                    result.message = parsedResult.message || result.message;
+                } catch (e) { /* Use default if not JSON */ }
 
-                const result = await response.json();
                 if (response.ok) {
-                    messageInput.value = ''; // Clear input
-                    messageStatus.textContent = 'Message sent!';
-                    messageStatus.style.color = 'green';
-                    fetchAndDisplayMessages(); // Refresh chat
-                    setTimeout(() => messageStatus.textContent = '', 2000);
+                    messageInput.value = ''; 
+                    fetchAndDisplayMessages(); 
                 } else {
-                    throw new Error(result.message || `HTTP error! status: ${response.status}`);
+                    throw new Error(result.message);
                 }
             } catch (error) {
                 console.error('Send message error:', error);
-                messageStatus.textContent = `Failed to send message: ${error.message}`;
-                messageStatus.style.color = 'red';
+                feedbackContainer.textContent = `Error: ${error.message}`; // Display user-friendly error
+                feedbackContainer.className = 'message-feedback error';
+                feedbackContainer.style.display = 'block';
+            } finally {
+                sendButton.disabled = false;
+                sendButton.textContent = originalButtonText; // Restore text in finally
             }
         });
     </script>

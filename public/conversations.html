@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Conversations - The Local Assist</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#007bff">
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-container container"> <!-- Added .container for consistent width -->
+            <a href="index.html" class="nav-brand">The Local Assist</a>
+            <ul class="nav-links">
+                <li class="nav-item" id="nav-home"><a href="index.html">Home</a></li>
+                <li class="nav-item" id="nav-requests"><a href="requests.html">View Requests</a></li>
+                <li class="nav-item" id="nav-offers"><a href="offers.html">View Offers</a></li>
+                
+                <li class="nav-item" id="nav-login" style="display:none;"><a href="login.html">Login</a></li>
+                <li class="nav-item" id="nav-signup" style="display:none;"><a href="signup.html">Sign Up</a></li>
+    
+                <li class="nav-item" id="nav-profile" style="display:none;"><a href="profile.html">My Profile</a></li>
+                <li class="nav-item" id="nav-create-request" style="display:none;"><a href="create_request.html">Post Request</a></li>
+                <li class="nav-item" id="nav-create-offer" style="display:none;"><a href="create_offer.html">Offer Service</a></li>
+                <li class="nav-item" id="nav-conversations" style="display:none;"><a href="conversations.html" class="active">My Chats</a></li>
+                <li class="nav-item" id="nav-logout" style="display:none;"><a href="#" id="logout-link" class="btn btn-info btn-sm">Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1>My Conversations</h1>
+        <p class="message-feedback info" style="display: block;">This feature is coming soon. Stay tuned!</p>
+        <!-- Later, this page will list users you've chatted with -->
+    </div>
+
+    <script src="nav.js"></script>
+    <script>
+        // Specific script for this page if needed, e.g., to mark "My Chats" as active
+        // For now, nav.js handles general link visibility.
+        // Adding active class manually for demo purposes if nav.js doesn't handle it based on URL
+        document.addEventListener('DOMContentLoaded', function() {
+            const conversationsLink = document.querySelector('#nav-conversations a');
+            if (conversationsLink) {
+                // A more robust solution would be to have nav.js detect current page and add 'active'
+                // For now, this is a simple way if this page is directly loaded.
+                 if(localStorage.getItem('userId')) { // Only show active if logged in
+                    conversationsLink.classList.add('active');
+                 }
+            }
+        });
+    </script>
+</body>
+</html>

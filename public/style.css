@@ -1,308 +1,692 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    color: #333;
-    line-height: 1.6;
+/* Global Resets and Box Sizing */
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+}
+
+/* CSS Variables for Theming */
+:root {
+    --primary-color: #007bff;    /* Blue */
+    --primary-color-darker: #0056b3;
+    --primary-color-rgb: 0, 123, 255; /* For rgba box shadow */
+    
+    --secondary-color: #6c757d;  /* Gray */
+    --secondary-color-darker: #545b62;
+
+    --accent-color: #17a2b8;     /* Info Blue / Teal */
+    --accent-color-darker: #117a8b;
+
+    --success-color: #28a745;   /* Green */
+    --success-color-darker: #1e7e34;
+    --success-bg-light: #d4edda;
+    --success-border-light: #c3e6cb;
+
+
+    --error-color: #dc3545;     /* Red */
+    --error-color-darker: #b21f2d;
+    --error-bg-light: #f8d7da;
+    --error-border-light: #f5c6cb;
+
+    --info-color: var(--accent-color); /* Using accent for info messages */
+    --info-bg-light: #d1ecf1;
+    --info-border-light: #bee5eb;
+    
+    --text-color: #212529;       /* Bootstrap's default body color - darker than previous */
+    --text-color-light: #f8f9fa; /* Light Gray / White for dark backgrounds */
+    --text-secondary: #6c757d;   /* For muted text, like placeholders or secondary info */
+    
+    --background-color: #ffffff; /* White */
+    --light-gray: #f8f9fa;       /* Very Light Gray for subtle backgrounds/borders */
+    --medium-gray: #dee2e6;      /* Bootstrap's default border color */
+    
+    --font-family-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    --font-family-monospace: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+
+    --default-border-radius: 0.375rem; /* 6px */
+    --box-shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    --box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    --input-focus-box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
+}
+
+/* Base Typography and Layout */
+body {
+    font-family: var(--font-family-sans-serif);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    font-size: 1rem; /* 16px assuming browser default */
+    padding-top: 70px; /* Placeholder: Adjust this value based on actual nav height */
+                       /* This prevents content from being hidden under the sticky nav */
+                       /* Measure actual nav height and set this. */
 }
 
 .container {
-    width: 80%;
-    max-width: 600px;
-    margin: 30px auto;
+    width: 90%; 
+    max-width: 1140px; /* Common max-width for large containers */
+    margin: 20px auto; 
     padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* background-color: var(--background-color); Optional: if different from body */
+    /* border-radius: var(--default-border-radius); */ /* Containers usually don't have rounded borders unless card-like */
+    /* box-shadow: var(--box-shadow-sm); */ /* Optional for containers */
 }
 
-h1 {
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
+h1, h2, h3, h4, h5, h6 {
+    margin-top: 0;
+    margin-bottom: 0.75rem; 
+    font-weight: 500; 
+    line-height: 1.2;
+}
+
+h1 { font-size: 2.25rem; } 
+h2 { font-size: 1.875rem; } 
+h3 { font-size: 1.5rem; }  
+h4 { font-size: 1.25rem; } 
+
+p {
+    margin-top: 0;
+    margin-bottom: 1rem; 
+}
+p:last-child {
+    margin-bottom: 0;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none; 
+}
+a:hover {
+    color: var(--primary-color-darker); 
+    text-decoration: underline;
 }
 
 label {
     display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
 }
 
 input[type="text"],
 input[type="email"],
 input[type="password"],
-textarea {
-    width: calc(100% - 22px); /* Account for padding and border */
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
+textarea,
+select { 
+    display: block; /* Ensure they take up full width by default if not in a flex/grid context */
+    width: 100%; 
+    padding: 0.5rem 0.75rem; /* Adjusted padding */
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--text-color);
+    background-color: var(--background-color);
+    background-clip: padding-box;
+    border: 1px solid var(--medium-gray);
+    appearance: none; /* Remove default system appearance */
+    border-radius: var(--default-border-radius);
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    margin-bottom: 1rem; /* Consistent margin */
 }
 
-button[type="submit"],
-button {
-    background-color: #5cb85c;
-    color: white;
-    padding: 10px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-    display: block;
-    width: 100%;
-    margin-bottom: 10px;
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--primary-color);
+    outline: 0;
+    box-shadow: var(--input-focus-box-shadow);
 }
 
 textarea {
-    resize: vertical; /* Allow vertical resizing */
-    min-height: 80px;
+    resize: vertical;
+    min-height: 100px;
 }
 
 small {
     display: block;
-    margin-top: -10px;
-    margin-bottom: 10px;
-    font-size: 0.8em;
-    color: #666;
+    margin-top: -0.75rem; 
+    margin-bottom: 0.75rem;
+    font-size: 0.875em; 
+    color: var(--text-secondary);
 }
 
-button:hover {
-    background-color: #4cae4c;
-}
-
-#message {
+/* Standardized Button Styling */
+.btn {
+    display: inline-block;
+    font-weight: 400;
+    line-height: 1.5;
+    color: var(--text-color-light); /* Default text for primary button */
     text-align: center;
-    margin-top: 15px;
-    font-size: 0.9em;
-}
-
-p {
-    text-align: center;
-}
-
-a {
-    color: #5cb85c;
     text-decoration: none;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    background-color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    padding: 0.5rem 1rem; /* Adjusted padding */
+    font-size: 1rem;
+    border-radius: var(--default-border-radius);
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-a:hover {
-    text-decoration: underline;
+.btn:hover {
+    color: var(--text-color-light);
+    background-color: var(--primary-color-darker);
+    border-color: var(--primary-color-darker);
 }
+
+.btn:focus, .btn.focus {
+    outline: 0;
+    box-shadow: var(--input-focus-box-shadow); 
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+.btn-secondary:hover {
+    background-color: var(--secondary-color-darker);
+    border-color: var(--secondary-color-darker);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    border-color: var(--success-color);
+}
+.btn-success:hover {
+    background-color: var(--success-color-darker);
+    border-color: var(--success-color-darker);
+}
+
+.btn-danger {
+    background-color: var(--error-color);
+    border-color: var(--error-color);
+}
+.btn-danger:hover {
+    background-color: var(--error-color-darker);
+    border-color: var(--error-color-darker);
+}
+
+.btn-info { 
+    background-color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+.btn-info:hover {
+    background-color: var(--accent-color-darker);
+    border-color: var(--accent-color-darker);
+}
+
+.btn-block { 
+    display: block;
+    width: 100%;
+}
+
+/* Fallback for existing buttons if not updated in HTML */
+button[type="submit"], button {
+    /* This is a general catch-all. Specificity might be an issue. */
+    /* Best to add .btn class to all buttons in HTML. */
+    /* For now, let's assume they should look like primary buttons by default if unstyled. */
+    display: inline-block; /* To match .btn */
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: var(--default-border-radius);
+    cursor: pointer;
+    text-align: center;
+    vertical-align: middle;
+    user-select: none;
+    color: var(--text-color-light);
+    background-color: var(--primary-color);
+    border: 1px solid var(--primary-color);
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+button[type="submit"]:hover, button:hover {
+     background-color: var(--primary-color-darker);
+     border-color: var(--primary-color-darker);
+}
+
+/* Message Styling (for JS-controlled messages) */
+.message-feedback { /* New general class for feedback elements */
+    text-align: center;
+    margin-top: 1rem;
+    margin-bottom: 1rem; /* Ensure space after message */
+    font-size: 0.95em;
+    padding: 0.75rem 1.25rem;
+    border: 1px solid transparent;
+    border-radius: var(--default-border-radius);
+    /* display: none; */ /* JS should control visibility */
+}
+.message-feedback.success {
+    color: var(--success-color-darker); /* Darker text for light bg */
+    background-color: var(--success-bg-light);
+    border-color: var(--success-border-light);
+    /* display: block; */
+}
+.message-feedback.error {
+    color: var(--error-color-darker); /* Darker text for light bg */
+    background-color: var(--error-bg-light);
+    border-color: var(--error-border-light);
+    /* display: block; */
+}
+.message-feedback.info {
+    color: var(--accent-color-darker); 
+    background-color: var(--info-bg-light);
+    border-color: var(--info-border-light);
+    /* display: block; */
+}
+/* Ensure existing #message, #messageStatus get this base style if they are used for feedback */
+#message, #messageStatus {
+    text-align: center;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.95em;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--default-border-radius);
+}
+
+
+/* Navigation Styling */
+/* This was the old nav styling, will be replaced/complemented by .main-nav below */
+/* nav { 
+    padding: 0.5rem 0;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--medium-gray);
+}
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    text-align: center;
+}
+nav ul li {
+    display: inline-block; 
+    margin: 0 0.5rem; 
+}
+nav ul li a {
+    font-size: 1.05rem; 
+    color: var(--primary-color);
+    text-decoration: none;
+    padding: 0.5rem 0.75rem; 
+    border-radius: var(--default-border-radius);
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+nav ul li a:hover, nav ul li a.active { 
+    color: var(--text-color-light);
+    background-color: var(--primary-color);
+} */
+
 
 /* Profile Page Specific */
+#profileDetails { /* Wrap profile details in a card-like structure */
+    background-color: var(--light-gray);
+    padding: 1.5rem;
+    border-radius: var(--default-border-radius);
+    border: 1px solid var(--medium-gray);
+    margin-bottom: 1.5rem;
+}
 #profileDetails p {
     text-align: left;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 8px;
-    margin-bottom: 8px;
+    border-bottom: 1px solid var(--medium-gray);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
 }
-#profileDetails p:last-child {
-    border-bottom: none;
-}
+#profileDetails p:last-child { border-bottom: none; }
 #profileDetails strong {
     display: inline-block;
-    width: 120px; /* Adjust as needed */
-    color: #555;
-}
-
-#logoutButton {
-    background-color: #d9534f;
-}
-#logoutButton:hover {
-    background-color: #c9302c;
+    width: 150px; 
+    color: var(--text-secondary); /* Muted color for labels */
 }
 
 .profile-actions {
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
     text-align: center;
 }
+.profile-actions .btn { /* Ensure buttons in profile actions use .btn */
+    margin: 0.25rem;
+}
 
+/* Class .button-link should be replaced by .btn .btn-info (or similar) in HTML */
+/* For any remaining .button-link: */
 .button-link {
-    display: inline-block; /* Changed to inline-block */
-    background-color: #007bff;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 4px;
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    border-radius: var(--default-border-radius);
     text-decoration: none;
-    font-size: 1em; /* Adjusted font size */
-    margin: 5px; /* Add some margin */
+    text-align: center;
+    vertical-align: middle;
+    cursor: pointer;
+    user-select: none;
+    color: var(--text-color-light);
+    background-color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    margin: 5px; /* Keep existing margin if this class is still used */
+}
+.button-link:hover {
+    background-color: var(--accent-color-darker);
+    border-color: var(--accent-color-darker);
+    color: var(--text-color-light);
 }
 
-.button-link:hover {
-    background-color: #0056b3;
-    text-decoration: none;
-}
 
 /* Item Listing Styles */
 .item-list {
-    margin-top: 20px;
+    margin-top: 1.5rem;
 }
-
 .list-item {
-    background-color: #f9f9f9;
-    border: 1px solid #eee;
-    border-radius: 5px;
-    padding: 15px;
-    margin-bottom: 15px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    background-color: var(--background-color); /* Use main background, or var(--light-gray) for contrast */
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--default-border-radius);
+    padding: 1.25rem; 
+    margin-bottom: 1.25rem;
+    box-shadow: var(--box-shadow-sm);
 }
-
 .list-item h3 {
     margin-top: 0;
-    color: #337ab7; /* A slightly different color for item titles */
+    color: var(--primary-color); 
+    margin-bottom: 0.5rem;
 }
-
 .list-item p {
-    margin-bottom: 5px;
-    text-align: left; /* Align text to left for list items */
+    margin-bottom: 0.5rem;
+    text-align: left; 
+    font-size: 0.95rem; /* Slightly smaller text for list item details */
 }
 .list-item p small {
     font-size: 0.85em;
-    color: #777;
+    color: var(--text-secondary);
+}
+.list-item .btn, .list-item .button-link { /* Target .btn or old .button-link */
+    margin-top: 0.75rem;
+    margin-right: 0.5rem; 
+}
+.list-item .btn:last-child, .list-item .button-link:last-child {
+    margin-right: 0;
 }
 
-.list-item .button-link { /* Style for buttons within list items */
-    display: inline-block;
-    margin-top: 10px;
-    padding: 8px 12px;
-    font-size: 0.9em;
-    background-color: #5cb85c; /* Standard button color */
-}
-.list-item .button-link:hover {
-    background-color: #4cae4c;
-}
-
-.view-map-link {
-    background-color: #17a2b8 !important; /* A different color for map links - e.g., info blue */
-    margin-left: 5px; /* Add some space if next to another button */
-}
-.view-map-link:hover {
-    background-color: #138496 !important;
+.view-map-link { /* This class is used with .button-link or .btn */
+    /* background-color: var(--info-color) !important; */ /* Ensure it uses info color if needed */
+    /* If it's a .btn.btn-info, this is redundant */
 }
 
 
 /* Matches Page Specific */
 #originalItem {
-    background-color: #e9f5ff; /* Light blueish background for emphasis */
-    padding: 15px;
-    border-radius: 5px;
-    margin-bottom: 20px;
+    background-color: var(--light-gray); 
+    padding: 1.25rem;
+    border-radius: var(--default-border-radius);
+    border: 1px solid var(--medium-gray);
+    margin-bottom: 1.5rem;
 }
-#originalItem h2 {
+#originalItem h2 { 
     margin-top: 0;
-    color: #0056b3;
+    color: var(--primary-color);
+    margin-bottom: 1rem;
 }
-#originalItem h3 {
-    color: #0056b3;
-}
-#originalItem p {
-    text-align: left;
+#originalItem h3 { color: var(--primary-color); } /* If h3 used inside */
+#originalItem p { text-align: left; }
+#originalItem .btn, #originalItem .button-link { margin-top: 0.5rem; } /* Space for map button if inside <p> */
+
+
+hr {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 0;
+    border-top: 1px solid var(--medium-gray);
 }
 
 /* Chat Page Specific Styling */
-.chat-container {
-    max-width: 700px; /* Wider for chat interface */
-}
+.chat-container { /* .container class already handles max-width */ }
 
 #chatWindow {
     height: 400px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    padding: 15px;
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--default-border-radius);
+    padding: 1rem;
     overflow-y: auto;
-    margin-bottom: 15px;
-    background-color: #f9f9f9;
+    margin-bottom: 1rem;
+    background-color: var(--light-gray);
 }
-
 .message-bubble {
-    padding: 8px 12px;
-    border-radius: 15px;
-    margin-bottom: 10px;
-    max-width: 70%;
+    padding: 0.625rem 1rem; 
+    border-radius: 1.25rem; /* More " bubbly" */
+    margin-bottom: 0.75rem;
+    max-width: 75%; 
     word-wrap: break-word;
+    line-height: 1.4; 
 }
-
 .message-bubble.sent {
-    background-color: #dcf8c6; /* Light green for sent messages */
-    margin-left: auto; /* Align to the right */
-    text-align: right;
+    background-color: var(--primary-color); 
+    color: var(--text-color-light);
+    margin-left: auto; 
+    /* text-align: right; */ /* Content inside should be left-aligned for readability */
 }
-
 .message-bubble.received {
-    background-color: #fff; /* White for received messages */
-    border: 1px solid #eee;
-    margin-right: auto; /* Align to the left */
-    text-align: left;
+    background-color: var(--medium-gray); 
+    color: var(--text-color);
+    /* border: 1px solid #d6d8db; */ /* Border can be removed if bg is distinct enough */
+    margin-right: auto; 
 }
-
 .message-bubble .msg-content {
     margin: 0;
     padding: 0;
-    font-size: 0.95em;
-    text-align: left; /* Ensure content within bubble is left-aligned */
+    font-size: 1rem; 
 }
-
 .message-bubble .msg-timestamp {
     display: block;
-    font-size: 0.75em;
-    color: #888;
-    margin-top: 4px;
+    font-size: 0.75em; 
+    color: inherit; /* Inherit color from parent for better contrast */
+    opacity: 0.8; /* Slightly muted timestamp */
+    margin-top: 5px;
+    /* text-align: inherit; */ /* Let it align based on bubble (sent/received) */
 }
+.message-bubble.sent .msg-timestamp { text-align: right; }
+.message-bubble.received .msg-timestamp { text-align: left; }
+
 
 #sendMessageForm {
     display: flex;
-    margin-bottom: 10px;
+    align-items: stretch; /* Make items fill height */
+    margin-bottom: 1rem;
 }
-
 #sendMessageForm textarea {
     flex-grow: 1;
-    margin-bottom: 0; /* Remove default margin from textarea */
-    margin-right: 10px;
-    min-height: 40px; /* Adjust height */
-    height: auto;
+    margin-bottom: 0; 
+    margin-right: 0.75rem;
+    min-height: 45px; 
 }
-
-#sendMessageForm button {
-    width: auto; /* Adjust button width */
-    padding: 10px 20px; /* Adjust padding */
+#sendMessageForm button { /* Expects .btn class in HTML */
+    width: auto; 
+    white-space: nowrap; 
+    flex-shrink: 0; /* Prevent button from shrinking */
 }
 
 .no-messages {
     text-align: center;
-    color: #777;
-    padding-top: 20px;
+    color: var(--text-secondary);
+    padding: 1.5rem 0;
+    font-style: italic;
 }
 
-#messageStatus { /* For send message status */
+
+/* Map Page Specific Styles */
+#mapContainer {
+    width: 100%;
+    height: 450px; 
+    border: 1px solid var(--medium-gray);
+    border-radius: var(--default-border-radius); 
+    overflow: hidden; 
+}
+#mapContainer iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+.map-title { 
     text-align: center;
-    margin-top: 5px;
-    font-size: 0.9em;
+    margin-bottom: 1rem;
 }
 
-
-hr {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    border: 0;
-    border-top: 1px solid #eee;
+/* Basic Responsiveness */
+@media (max-width: 992px) { 
+    .container { width: 95%; }
+    h1 { font-size: 2rem; }
+    h2 { font-size: 1.75rem; }
+    h3 { font-size: 1.375rem; }
 }
 
-/* Simple nav for index.html */
-nav ul {
-    list-style-type: none;
+@media (max-width: 768px) { 
+    body { 
+        font-size: 0.9375rem; /* 15px */
+        padding-top: 50px; /* Adjust for potentially smaller nav */
+    }
+    .container { padding: 15px; margin-top: 10px; margin-bottom: 10px; }
+    h1 { font-size: 1.75rem; } /* Adjusted for smaller base */
+    h2 { font-size: 1.5rem; }  /* Adjusted for smaller base */
+    
+    /* nav ul li { display: block; margin: 0.5rem 0; } */ /* This will be handled by .main-nav specific media query */
+    /* nav ul li a { display: block; } */
+
+    .btn { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
+    input[type="text"], input[type="email"], input[type="password"], textarea, select {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.95rem;
+    }
+    #sendMessageForm textarea { padding: 0.4rem 0.6rem; }
+}
+
+@media (max-width: 576px) { 
+    h1 { font-size: 1.6rem; }
+    .list-item { padding: 1rem; }
+    #profileDetails strong { width: auto; display:block; margin-bottom: 0.25rem;} /* Stack label and value */
+    .message-bubble { max-width: 85%; } /* Allow bubbles to be a bit wider */
+}
+
+/* Ensure specific ID'd buttons get .btn styling if HTML not updated */
+/* It's better to add classes in HTML: e.g., <button id="logoutButton" class="btn btn-danger"> */
+#logoutButton:not([class*="btn-"]) { /* If no btn class exists */
+    background-color: var(--error-color);
+    border-color: var(--error-color);
+    color: var(--text-color-light);
+}
+#logoutButton:not([class*="btn-"]):hover {
+    background-color: var(--error-color-darker);
+    border-color: var(--error-color-darker);
+}
+
+/* Main Navigation Bar Styles */
+.main-nav {
+    background-color: var(--primary-color); 
+    padding: 0.75rem 0; 
+    box-shadow: var(--box-shadow-sm);
+    position: sticky; 
+    top: 0;
+    left: 0; /* ensure it spans full width */
+    right: 0; /* ensure it spans full width */
+    z-index: 1020; /* Ensure it's above most other content, Bootstrap's default for sticky is 1020 */
+    width: 100%; /* Explicitly set width */
+}
+
+.main-nav .nav-container { 
+    width: 90%;
+    max-width: 1140px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0; 
+}
+
+.main-nav .nav-brand {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--text-color-light); 
+    text-decoration: none;
+}
+.main-nav .nav-brand:hover {
+    color: var(--text-color-light); 
+    text-decoration: none;
+}
+
+.main-nav .nav-links {
+    list-style: none;
+    margin: 0;
     padding: 0;
-    text-align: center;
-    margin-bottom: 20px;
+    display: flex; 
+    align-items: center;
 }
 
-nav ul li {
-    display: inline;
-    margin-right: 15px;
+.main-nav .nav-links .nav-item {
+    margin-left: 1rem; 
+}
+.main-nav .nav-links .nav-item:first-child {
+    margin-left: 0; /* No margin for the first item if it's the only one or for structure */
 }
 
-nav ul li a {
-    font-size: 1.2em;
+
+.main-nav .nav-links .nav-item a { /* Target all links, including button-styled ones */
+    color: var(--text-color-light); 
+    text-decoration: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--default-border-radius);
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+    font-size: 1rem; 
+    display: inline-block; /* Ensure padding is applied correctly */
 }
+
+.main-nav .nav-links .nav-item a:hover,
+.main-nav .nav-links .nav-item a.active { 
+    background-color: var(--primary-color-darker); 
+    color: var(--text-color-light);
+}
+
+/* Special styling for logout if it's a button using .btn classes */
+.main-nav .nav-links .nav-item #logout-link.btn {
+    padding: 0.375rem 0.75rem; /* Adjust padding to better fit nav height */
+    font-size: 0.9rem; /* Slightly smaller font for nav button */
+    background-color: var(--accent-color); /* Example: use accent for logout */
+    border-color: var(--accent-color);
+    color: var(--text-color-light); /* Ensure text color is light */
+}
+.main-nav .nav-links .nav-item #logout-link.btn:hover {
+    background-color: var(--accent-color-darker);
+    border-color: var(--accent-color-darker);
+}
+
+
+/* Responsive Navigation for .main-nav */
+@media (max-width: 992px) { /* Increased breakpoint for stacking nav for better usability */
+    .main-nav .nav-container {
+        flex-direction: column; 
+        align-items: flex-start; 
+    }
+    .main-nav .nav-brand {
+        margin-bottom: 0.75rem; 
+    }
+    .main-nav .nav-links {
+        flex-direction: column; 
+        width: 100%; 
+        align-items: flex-start; 
+    }
+    .main-nav .nav-links .nav-item {
+        margin-left: 0; 
+        margin-bottom: 0.5rem; 
+        width: 100%; 
+    }
+    .main-nav .nav-links .nav-item a {
+        display: block; 
+        padding: 0.75rem; 
+        width: 100%; /* Ensure links take full width for tapping */
+    }
+    .main-nav .nav-links .nav-item #logout-link.btn { /* Ensure block display for button too */
+        width: 100%;
+        text-align: left; /* Align text left like other nav links */
+        padding: 0.75rem; /* Match other nav links padding */
+    }
+}
+/* Remove general nav media query if .main-nav covers it */
+/* @media (max-width: 768px) { 
+    nav ul li { display: block; margin: 0.5rem 0; }
+    nav ul li a { display: block; }
+} */
