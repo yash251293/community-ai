@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - The Local Assist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>User Profile</h1>
+        <div id="profileDetails">
+            <p><strong>Name:</strong> <span id="profileName"></span></p>
+            <p><strong>Email:</strong> <span id="profileEmail"></span></p>
+            <p><strong>Location:</strong> <span id="profileLocation"></span></p>
+            <p><strong>Bio:</strong> <span id="profileBio"></span></p>
+            <p><strong>Joined:</strong> <span id="profileCreatedAt"></span></p>
+            <p><strong>Last Login:</strong> <span id="profileLastLogin"></span></p>
+        </div>
+        <p id="message"></p>
+        
+        <div class="profile-actions">
+            <a href="create_request.html" class="button-link">Post a Service Request</a>
+            <a href="create_offer.html" class="button-link">Offer a Service</a>
+        </div>
+
+        <button id="logoutButton">Logout</button>
+        <p><a href="index.html">Back to Home</a></p>
+    </div>
+
+    <script>
+        const profileName = document.getElementById('profileName');
+        const profileEmail = document.getElementById('profileEmail');
+        const profileLocation = document.getElementById('profileLocation');
+        const profileBio = document.getElementById('profileBio');
+        const profileCreatedAt = document.getElementById('profileCreatedAt');
+        const profileLastLogin = document.getElementById('profileLastLogin');
+        const messageElement = document.getElementById('message');
+        const logoutButton = document.getElementById('logoutButton');
+
+        async function fetchProfile() {
+            const userId = localStorage.getItem('userId');
+            const token = localStorage.getItem('mockToken');
+
+            if (!userId || !token) {
+                messageElement.textContent = 'You are not logged in. Redirecting to login...';
+                messageElement.style.color = 'red';
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/users/${userId}/profile`);
+                const result = await response.json();
+
+                if (response.ok) {
+                    profileName.textContent = result.Name || 'N/A';
+                    profileEmail.textContent = result.Email || 'N/A';
+                    profileLocation.textContent = result.Location || 'Not set';
+                    profileBio.textContent = result.Bio || 'Not set';
+                    profileCreatedAt.textContent = result.CreatedAt ? new Date(result.CreatedAt).toLocaleDateString() : 'N/A';
+                    profileLastLogin.textContent = result.LastLogin ? new Date(result.LastLogin).toLocaleString() : 'Never';
+                } else {
+                    messageElement.textContent = `Error: ${result.message}. Redirecting to login...`;
+                    messageElement.style.color = 'red';
+                    localStorage.removeItem('userId');
+                    localStorage.removeItem('mockToken');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                }
+            } catch (error) {
+                console.error('Profile fetch error:', error);
+                messageElement.textContent = 'An unexpected error occurred. Please try again.';
+                messageElement.style.color = 'red';
+            }
+        }
+
+        logoutButton.addEventListener('click', () => {
+            localStorage.removeItem('userId');
+            localStorage.removeItem('mockToken');
+            messageElement.textContent = 'Logged out successfully. Redirecting to login...';
+            messageElement.style.color = 'green';
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+        });
+
+        // Fetch profile data when the page loads
+        fetchProfile();
+    </script>
+</body>
+</html>

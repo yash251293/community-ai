@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Requests - The Local Assist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Available Service Requests</h1>
+        <div id="requestsList" class="item-list">
+            <!-- Requests will be loaded here by JavaScript -->
+        </div>
+        <p id="message"></p>
+        <p><a href="index.html">Home</a> | <a href="profile.html">My Profile</a></p>
+    </div>
+
+    <script>
+        const requestsList = document.getElementById('requestsList');
+        const messageElement = document.getElementById('message');
+
+        async function fetchRequests() {
+            try {
+                const response = await fetch('/api/requests');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const requests = await response.json();
+
+                if (requests.length === 0) {
+                    messageElement.textContent = 'No service requests found at the moment.';
+                    return;
+                }
+
+                requests.forEach(request => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `
+                        <h3>${escapeHTML(request.Title)}</h3>
+                        <p><strong>Category:</strong> ${escapeHTML(request.Category)}</p>
+                        <p><strong>Location:</strong> ${escapeHTML(request.Location)}</p>
+                        <p><strong>Status:</strong> ${escapeHTML(request.Status)}</p>
+                        <p><small>Posted: ${new Date(request.CreatedAt).toLocaleDateString()}</small></p>
+                        <a href="matches.html?type=request&id=${request.RequestID}" class="button-link">Find Matches</a>
+                        ${request.Location ? `<a href="map.html?location=${encodeURIComponent(request.Location)}" class="button-link view-map-link" target="_blank">View on Map</a>` : ''}
+                    `;
+                    requestsList.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error('Fetch requests error:', error);
+                messageElement.textContent = 'Failed to load service requests. ' + error.message;
+                messageElement.style.color = 'red';
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>"']/g, function (match) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[match];
+            });
+        }
+
+        fetchRequests();
+    </script>
+</body>
+</html>

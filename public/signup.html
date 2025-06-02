@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - The Local Assist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Sign Up</h1>
+        <form id="signupForm">
+            <div>
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+            <div>
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">Sign Up</button>
+        </form>
+        <p id="message"></p>
+        <p>Already have an account? <a href="login.html">Login here</a>.</p>
+    </div>
+
+    <script>
+        const signupForm = document.getElementById('signupForm');
+        const messageElement = document.getElementById('message');
+
+        signupForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            messageElement.textContent = ''; // Clear previous messages
+
+            const name = event.target.name.value;
+            const email = event.target.email.value;
+            const password = event.target.password.value;
+
+            try {
+                const response = await fetch('/api/users/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ Name: name, Email: email, Password: password }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageElement.textContent = 'Registration successful! You can now login.';
+                    messageElement.style.color = 'green';
+                    signupForm.reset();
+                    // Optionally redirect to login page
+                    // window.location.href = 'login.html';
+                } else {
+                    messageElement.textContent = `Error: ${result.message}`;
+                    messageElement.style.color = 'red';
+                }
+            } catch (error) {
+                console.error('Signup error:', error);
+                messageElement.textContent = 'An unexpected error occurred. Please try again.';
+                messageElement.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Service Offer - The Local Assist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Offer a New Service</h1>
+        <form id="createOfferForm">
+            <div>
+                <label for="title">Service Title:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            <div>
+                <label for="description">Service Description:</label>
+                <textarea id="description" name="description" rows="4" required></textarea>
+            </div>
+            <div>
+                <label for="category">Category:</label>
+                <input type="text" id="category" name="category" required>
+                <small>E.g., Web Design, Pet Sitting, Handyman</small>
+            </div>
+            <div>
+                <label for="serviceArea">Service Area:</label>
+                <input type="text" id="serviceArea" name="serviceArea" required>
+                <small>E.g., "Anytown and surrounding areas", "Remote only"</small>
+            </div>
+            <div>
+                <label for="availability">Availability (Optional):</label>
+                <input type="text" id="availability" name="availability">
+                <small>E.g., Weekends, Mon-Fri evenings</small>
+            </div>
+            <button type="submit">Post Offer</button>
+        </form>
+        <p id="message"></p>
+        <p><a href="profile.html">Back to Profile</a> | <a href="index.html">Home</a></p>
+    </div>
+
+    <script>
+        const createOfferForm = document.getElementById('createOfferForm');
+        const messageElement = document.getElementById('message');
+
+        // Check for login status
+        const userId = localStorage.getItem('userId');
+        const token = localStorage.getItem('mockToken');
+
+        if (!userId || !token) {
+            messageElement.textContent = 'You must be logged in to post an offer. Redirecting to login...';
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2500);
+        }
+
+        createOfferForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!userId) { // Double check
+                messageElement.textContent = 'Login session expired. Please login again.';
+                return;
+            }
+            messageElement.textContent = '';
+
+            const title = event.target.title.value;
+            const description = event.target.description.value;
+            const category = event.target.category.value;
+            const serviceArea = event.target.serviceArea.value;
+            const availability = event.target.availability.value;
+
+            try {
+                const response = await fetch('/api/offers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ userId, title, description, category, serviceArea, availability }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageElement.textContent = 'Service offer posted successfully!';
+                    messageElement.style.color = 'green';
+                    createOfferForm.reset();
+                } else {
+                    messageElement.textContent = `Error: ${result.message}`;
+                    messageElement.style.color = 'red';
+                }
+            } catch (error) {
+                console.error('Create offer error:', error);
+                messageElement.textContent = 'An unexpected error occurred. Please try again.';
+                messageElement.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+</html>

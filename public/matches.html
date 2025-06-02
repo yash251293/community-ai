@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matches - The Local Assist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Matches</h1>
+        <div id="originalItem" class="item-detail">
+            <h2>Original Item Details</h2>
+            <!-- Original item details will be loaded here -->
+        </div>
+        <hr>
+        <h2>Found Matches</h2>
+        <div id="matchesList" class="item-list">
+            <!-- Matches will be loaded here -->
+        </div>
+        <p id="message"></p>
+        <p><a href="index.html">Home</a> | <a href="requests.html">View Requests</a> | <a href="offers.html">View Offers</a></p>
+    </div>
+
+    <script>
+        const originalItemDiv = document.getElementById('originalItem');
+        const matchesListDiv = document.getElementById('matchesList');
+        const messageElement = document.getElementById('message');
+
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return '';
+            return str.replace(/[&<>"']/g, function (match) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[match];
+            });
+        }
+
+        async function fetchItemDetails(itemType, itemId) {
+            // Determine the correct endpoint based on itemType
+            const endpoint = itemType === 'request' ? `/api/requests` : `/api/offers`;
+            // This is a simplified fetch. Ideally, you'd fetch a single item by ID.
+            // For now, we fetch all and filter, which is inefficient but works with current backend.
+            // TODO: Backend should have GET /api/requests/:id and GET /api/offers/:id
+            
+            try {
+                const response = await fetch(endpoint);
+                if (!response.ok) throw new Error(`Failed to fetch original ${itemType}`);
+                const items = await response.json();
+                const item = items.find(i => (itemType === 'request' ? i.RequestID : i.OfferID) === parseInt(itemId));
+
+                if (item) {
+                    originalItemDiv.innerHTML = `
+                        <h3>${escapeHTML(item.Title)}</h3>
+                        <p><strong>Category:</strong> ${escapeHTML(item.Category)}</p>
+                        <p><strong>Description:</strong> ${escapeHTML(item.Description)}</p>
+                        ${itemType === 'request' ? `<p><strong>Location:</strong> ${escapeHTML(item.Location)}</p>` : ''}
+                        ${itemType === 'offer' ? `<p><strong>Service Area:</strong> ${escapeHTML(item.ServiceArea)}</p>` : ''}
+                        ${itemType === 'offer' ? `<p><strong>Availability:</strong> ${escapeHTML(item.Availability)}</p>` : ''}
+                        <p><strong>Status:</strong> ${escapeHTML(item.Status)}</p>
+                        ${(itemType === 'request' && item.Location) ? `<p><a href="map.html?location=${encodeURIComponent(item.Location)}" class="button-link view-map-link" target="_blank">View on Map</a></p>` : ''}
+                        ${(itemType === 'offer' && item.ServiceArea) ? `<p><a href="map.html?location=${encodeURIComponent(item.ServiceArea)}" class="button-link view-map-link" target="_blank">View on Map</a></p>` : ''}
+                    `;
+                } else {
+                    originalItemDiv.innerHTML = `<p>Original ${itemType} not found.</p>`;
+                }
+            } catch (error) {
+                console.error(`Error fetching original ${itemType}:`, error);
+                originalItemDiv.innerHTML = `<p>Error loading original ${itemType} details.</p>`;
+            }
+        }
+
+
+        async function fetchMatches() {
+            const params = new URLSearchParams(window.location.search);
+            const itemType = params.get('type');
+            const itemId = params.get('id');
+
+            if (!itemType || !itemId) {
+                messageElement.textContent = 'Item type or ID missing from URL parameters.';
+                messageElement.style.color = 'red';
+                return;
+            }
+
+            // Fetch and display the original item's details
+            await fetchItemDetails(itemType, itemId);
+
+            try {
+                const response = await fetch(`/api/matches?itemType=${itemType}&itemId=${itemId}`);
+                if (!response.ok) {
+                     const errorResult = await response.json();
+                    throw new Error(errorResult.message || `HTTP error! status: ${response.status}`);
+                }
+                const matches = await response.json();
+
+                if (matches.length === 0) {
+                    messageElement.textContent = 'No matches found for this item.';
+                    return;
+                }
+
+                matchesListDiv.innerHTML = ''; // Clear previous matches
+                matches.forEach(match => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item match-item'; // Added match-item for specific styling if needed
+                    // Display details based on whether the match is an offer or a request
+                    if (itemType === 'request') { // Matches are offers
+                        item.innerHTML = `
+                            <h4>${escapeHTML(match.Title)} (Offer)</h4>
+                            <p><strong>Category:</strong> ${escapeHTML(match.Category)}</p>
+                            <p><strong>Service Area:</strong> ${escapeHTML(match.ServiceArea)}</p>
+                            <p><strong>Availability:</strong> ${escapeHTML(match.Availability)}</p>
+                            <p><small>Offered by UserID: ${match.UserID}</small></p>
+                            <p><small>Posted: ${new Date(match.CreatedAt).toLocaleDateString()}</small></p>
+                            <button onclick="messageUser(${match.UserID})">Message User</button>
+                        `;
+                    } else { // Matches are requests (itemType === 'offer')
+                        item.innerHTML = `
+                            <h4>${escapeHTML(match.Title)} (Request)</h4>
+                            <p><strong>Category:</strong> ${escapeHTML(match.Category)}</p>
+                            <p><strong>Location:</strong> ${escapeHTML(match.Location)}</p>
+                            <p><small>Requested by UserID: ${match.UserID}</small></p>
+                            <p><small>Posted: ${new Date(match.CreatedAt).toLocaleDateString()}</small></p>
+                            <button onclick="messageUser(${match.UserID})">Message User</button>
+                        `;
+                    }
+                    matchesListDiv.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error('Fetch matches error:', error);
+                messageElement.textContent = 'Failed to load matches. ' + error.message;
+                messageElement.style.color = 'red';
+            }
+        }
+
+        function messageUser(otherUserId) {
+            const currentUserId = localStorage.getItem('userId');
+            if (!currentUserId) {
+                alert('You must be logged in to send messages. Redirecting to login...');
+                window.location.href = 'login.html';
+                return;
+            }
+            if (parseInt(currentUserId) === parseInt(otherUserId)) {
+                alert("You cannot message yourself.");
+                return;
+            }
+            window.location.href = `chat.html?currentUser=${currentUserId}&otherUser=${otherUserId}`;
+        }
+
+        fetchMatches();
+    </script>
+</body>
+</html>

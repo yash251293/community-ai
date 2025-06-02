@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Map - The Local Assist</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        #mapContainer {
+            width: 100%;
+            height: 450px; /* Default height, can be adjusted */
+            border: 1px solid #ccc;
+        }
+        #mapContainer iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        .map-title {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="mapTitle" class="map-title">Map</h1>
+        <div id="mapContainer">
+            <!-- Map iframe will be inserted here -->
+        </div>
+        <p id="message"></p>
+        <p style="text-align: center; margin-top: 15px;"><a href="index.html">Home</a></p>
+    </div>
+
+    <script>
+        const mapContainer = document.getElementById('mapContainer');
+        const mapTitleElement = document.getElementById('mapTitle');
+        const messageElement = document.getElementById('message');
+
+        function displayMap() {
+            const params = new URLSearchParams(window.location.search);
+            let locationQuery = params.get('location');
+
+            if (!locationQuery || locationQuery.trim() === "") {
+                locationQuery = "Delhi, India"; // Default location
+                messageElement.textContent = "No location specified, showing default map for Delhi, India.";
+            } else {
+                 messageElement.textContent = `Showing map for: ${escapeHTML(locationQuery)}`;
+            }
+            
+            mapTitleElement.textContent = `Map for ${escapeHTML(locationQuery)}`;
+
+            const iframe = document.createElement('iframe');
+            iframe.setAttribute('loading', 'lazy');
+            iframe.setAttribute('allowfullscreen', '');
+            iframe.setAttribute('referrerpolicy', 'no-referrer-when-downgrade');
+            
+            // Construct Google Maps URL
+            // Note: This method of embedding Google Maps without an API key is convenient for simple cases
+            // but might have limitations or change in the future.
+            // For production, Google recommends using the Maps Embed API with an API key.
+            const mapUrl = `https://maps.google.com/maps?q=${encodeURIComponent(locationQuery)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
+            iframe.src = mapUrl;
+
+            mapContainer.innerHTML = ''; // Clear previous map if any
+            mapContainer.appendChild(iframe);
+        }
+
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return '';
+            return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[match]));
+        }
+
+        // Display map on page load
+        displayMap();
+    </script>
+</body>
+</html>

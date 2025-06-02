@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat - The Local Assist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container chat-container">
+        <h1 id="chatHeader">Chat</h1>
+        <div id="chatWindow">
+            <!-- Messages will be loaded here -->
+        </div>
+        <form id="sendMessageForm">
+            <textarea id="messageInput" placeholder="Type your message..." required></textarea>
+            <button type="submit">Send</button>
+        </form>
+        <p id="messageStatus"></p>
+        <p><a href="matches.html">Back to Matches</a> | <a href="index.html">Home</a></p>
+    </div>
+
+    <script>
+        const chatHeader = document.getElementById('chatHeader');
+        const chatWindow = document.getElementById('chatWindow');
+        const sendMessageForm = document.getElementById('sendMessageForm');
+        const messageInput = document.getElementById('messageInput');
+        const messageStatus = document.getElementById('messageStatus');
+
+        const params = new URLSearchParams(window.location.search);
+        const currentUserId = params.get('currentUser');
+        const otherUserId = params.get('otherUser');
+
+        // Basic Auth Check
+        const loggedInUserId = localStorage.getItem('userId');
+        if (!loggedInUserId || loggedInUserId !== currentUserId) {
+            messageStatus.textContent = 'Error: You are not logged in or user ID mismatch. Redirecting to login...';
+            messageStatus.style.color = 'red';
+            setTimeout(() => { window.location.href = 'login.html'; }, 2500);
+        } else if (!otherUserId) {
+            messageStatus.textContent = 'Error: No recipient specified for this chat.';
+            messageStatus.style.color = 'red';
+        } else {
+            chatHeader.textContent = `Chat with User ${otherUserId}`;
+            fetchAndDisplayMessages();
+        }
+
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return '';
+            return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[match]));
+        }
+
+        async function fetchAndDisplayMessages() {
+            if (!currentUserId || !otherUserId) return;
+
+            try {
+                const response = await fetch(`/api/messages?userId1=${currentUserId}&userId2=${otherUserId}`);
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.message || `HTTP error! status: ${response.status}`);
+                }
+                const messages = await response.json();
+                chatWindow.innerHTML = ''; // Clear existing messages
+
+                if (messages.length === 0) {
+                    chatWindow.innerHTML = '<p class="no-messages">No messages yet. Start the conversation!</p>';
+                } else {
+                    messages.forEach(msg => {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.classList.add('message-bubble');
+                        if (msg.SenderUserID === parseInt(currentUserId)) {
+                            messageDiv.classList.add('sent');
+                        } else {
+                            messageDiv.classList.add('received');
+                        }
+                        messageDiv.innerHTML = `
+                            <p class="msg-content">${escapeHTML(msg.MessageContent)}</p>
+                            <span class="msg-timestamp">${new Date(msg.SentAt).toLocaleTimeString()}</span>
+                        `;
+                        chatWindow.appendChild(messageDiv);
+                    });
+                }
+                chatWindow.scrollTop = chatWindow.scrollHeight; // Scroll to the bottom
+            } catch (error) {
+                console.error('Fetch messages error:', error);
+                messageStatus.textContent = `Failed to load messages: ${error.message}`;
+                messageStatus.style.color = 'red';
+            }
+        }
+
+        sendMessageForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const content = messageInput.value.trim();
+            if (!content || !currentUserId || !otherUserId) {
+                messageStatus.textContent = 'Cannot send empty message or missing user IDs.';
+                messageStatus.style.color = 'red';
+                return;
+            }
+
+            messageStatus.textContent = 'Sending...';
+            try {
+                const response = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ senderId: currentUserId, receiverId: otherUserId, content }),
+                });
+
+                const result = await response.json();
+                if (response.ok) {
+                    messageInput.value = ''; // Clear input
+                    messageStatus.textContent = 'Message sent!';
+                    messageStatus.style.color = 'green';
+                    fetchAndDisplayMessages(); // Refresh chat
+                    setTimeout(() => messageStatus.textContent = '', 2000);
+                } else {
+                    throw new Error(result.message || `HTTP error! status: ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Send message error:', error);
+                messageStatus.textContent = `Failed to send message: ${error.message}`;
+                messageStatus.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+</html>

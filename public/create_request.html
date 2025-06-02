@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Service Request - The Local Assist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Post a New Service Request</h1>
+        <form id="createRequestForm">
+            <div>
+                <label for="title">Title:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            <div>
+                <label for="description">Description:</label>
+                <textarea id="description" name="description" rows="4" required></textarea>
+            </div>
+            <div>
+                <label for="category">Category:</label>
+                <input type="text" id="category" name="category" required>
+                <small>E.g., Plumbing, Gardening, Tutoring</small>
+            </div>
+            <div>
+                <label for="location">Location:</label>
+                <input type="text" id="location" name="location" required>
+                <small>E.g., Your address or neighborhood</small>
+            </div>
+            <button type="submit">Post Request</button>
+        </form>
+        <p id="message"></p>
+        <p><a href="profile.html">Back to Profile</a> | <a href="index.html">Home</a></p>
+    </div>
+
+    <script>
+        const createRequestForm = document.getElementById('createRequestForm');
+        const messageElement = document.getElementById('message');
+
+        // Check for login status
+        const userId = localStorage.getItem('userId');
+        const token = localStorage.getItem('mockToken');
+
+        if (!userId || !token) {
+            messageElement.textContent = 'You must be logged in to post a request. Redirecting to login...';
+            messageElement.style.color = 'red';
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2500);
+        }
+
+        createRequestForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!userId) { // Double check, in case timeout didn't redirect yet
+                messageElement.textContent = 'Login session expired. Please login again.';
+                return;
+            }
+            messageElement.textContent = '';
+
+            const title = event.target.title.value;
+            const description = event.target.description.value;
+            const category = event.target.category.value;
+            const location = event.target.location.value;
+
+            try {
+                const response = await fetch('/api/requests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // In a real app, the token would be sent for authentication
+                        // 'Authorization': `Bearer ${token}` 
+                    },
+                    body: JSON.stringify({ userId, title, description, category, location }),
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    messageElement.textContent = 'Service request posted successfully!';
+                    messageElement.style.color = 'green';
+                    createRequestForm.reset();
+                } else {
+                    messageElement.textContent = `Error: ${result.message}`;
+                    messageElement.style.color = 'red';
+                }
+            } catch (error) {
+                console.error('Create request error:', error);
+                messageElement.textContent = 'An unexpected error occurred. Please try again.';
+                messageElement.style.color = 'red';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Service Offers - The Local Assist</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Available Service Offers</h1>
+        <div id="offersList" class="item-list">
+            <!-- Offers will be loaded here by JavaScript -->
+        </div>
+        <p id="message"></p>
+        <p><a href="index.html">Home</a> | <a href="profile.html">My Profile</a></p>
+    </div>
+
+    <script>
+        const offersList = document.getElementById('offersList');
+        const messageElement = document.getElementById('message');
+
+        async function fetchOffers() {
+            try {
+                const response = await fetch('/api/offers');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const offers = await response.json();
+
+                if (offers.length === 0) {
+                    messageElement.textContent = 'No service offers found at the moment.';
+                    return;
+                }
+
+                offers.forEach(offer => {
+                    const item = document.createElement('div');
+                    item.className = 'list-item';
+                    item.innerHTML = `
+                        <h3>${escapeHTML(offer.Title)}</h3>
+                        <p><strong>Category:</strong> ${escapeHTML(offer.Category)}</p>
+                        <p><strong>Service Area:</strong> ${escapeHTML(offer.ServiceArea)}</p>
+                        <p><strong>Availability:</strong> ${escapeHTML(offer.Availability)}</p>
+                        <p><strong>Status:</strong> ${escapeHTML(offer.Status)}</p>
+                        <p><small>Posted: ${new Date(offer.CreatedAt).toLocaleDateString()}</small></p>
+                        <a href="matches.html?type=offer&id=${offer.OfferID}" class="button-link">Find Matches</a>
+                        ${offer.ServiceArea ? `<a href="map.html?location=${encodeURIComponent(offer.ServiceArea)}" class="button-link view-map-link" target="_blank">View on Map</a>` : ''}
+                    `;
+                    offersList.appendChild(item);
+                });
+
+            } catch (error) {
+                console.error('Fetch offers error:', error);
+                messageElement.textContent = 'Failed to load service offers. ' + error.message;
+                messageElement.style.color = 'red';
+            }
+        }
+        
+        function escapeHTML(str) {
+             return str.replace(/[&<>"']/g, function (match) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#39;'
+                }[match];
+            });
+        }
+
+        fetchOffers();
+    </script>
+</body>
+</html>
